@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Database, FilePlus2, FolderKanban, LogOut, Settings2 } from "lucide-react";
+import { Database, FilePlus2, FolderKanban, LogOut, Settings2, Type } from "lucide-react";
 import { chatGPTSignOutPath, requireChatGPTUser } from "@/app/chatgpt-auth";
 import { AdminWebMcp } from "@/components/admin-webmcp";
 
@@ -14,6 +14,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <Link href="/admin"><FolderKanban /> Projeler</Link>
         <Link href="/admin/projects/new"><FilePlus2 /> Yeni proje</Link>
         <Link href="/admin/profile"><Settings2 /> Profil</Link>
+        <Link href="/admin/content"><Type /> Site metinleri</Link>
         <Link href="/admin/database"><Database /> Veritabanı</Link>
       </nav>
       <div className="admin-user"><span>{user.displayName}</span><a href={chatGPTSignOutPath("/")}><LogOut size={16} /> Çıkış</a></div>

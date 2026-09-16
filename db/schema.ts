@@ -16,3 +16,9 @@ export const profiles = sqliteTable("profiles", {
   id: integer("id").primaryKey(), displayName: text("display_name").notNull(), role: text("role").notNull(), headline: text("headline").notNull(),
   about: text("about").notNull(), email: text("email").notNull().default(""), updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
+
+export const siteContent = sqliteTable("site_content", {
+  id: integer("id").primaryKey(),
+  content: text("content").notNull(),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});

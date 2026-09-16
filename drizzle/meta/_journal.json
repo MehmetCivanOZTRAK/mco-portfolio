@@ -8,6 +8,13 @@
       "when": 1789516318350,
       "tag": "0000_shiny_valeria_richards",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1789517251322,
+      "tag": "0001_bouncy_venom",
+      "breakpoints": true
     }
   ]
 }

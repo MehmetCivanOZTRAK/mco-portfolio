@@ -1,9 +1,8 @@
-import { getChatGPTUser } from "@/app/chatgpt-auth";
+import { verifyAdminSession, ADMIN_COOKIE } from "@/lib/admin-auth";
 
-export async function requireApiAdmin() {
-  const user = await getChatGPTUser();
-  if (!user) throw new ApiError("Oturum açmanız gerekiyor.", 401);
-  return user;
+export async function requireApiAdmin(request: Request) {
+  const cookie = request.headers.get("cookie")?.split(";").map((part) => part.trim()).find((part) => part.startsWith(`${ADMIN_COOKIE}=`))?.slice(ADMIN_COOKIE.length + 1);
+  if (!(await verifyAdminSession(cookie))) throw new ApiError("Oturum açmanız gerekiyor.", 401);
 }
 
 export function assertSameOrigin(request: Request) {

@@ -1,4 +1,18 @@
-# vinext-starter
+# Ciwan Games
+
+Kişisel HTML5 oyun portalı ve yönetim paneli. Oyunlar kapak görseli, kategori, açıklama ve kökünde `index.html` bulunan ZIP paketiyle eklenir. ZIP içindeki yollar göreli olmalı; paket en fazla 15 MB, açılmış içerik en fazla 60 MB ve 300 dosya olabilir.
+
+## Yerel kullanım
+
+1. `.dev.vars.example` dosyasını `.dev.vars` olarak kopyalayın ve admin değerlerini doldurun.
+2. İlk kurulumda bağımlılıkları yükleyin ve `npm run build` çalıştırın.
+3. `drizzle/` klasöründeki migrasyonları sırasıyla yerel D1 veritabanına uygulayın.
+4. `npm run dev` komutuyla siteyi `http://localhost:5173` adresinde açın.
+5. Yönetim paneli `http://localhost:5173/login` adresindedir.
+
+Yerel D1 ve R2 verileri `.wrangler/state` altında saklanır. Bu klasör Git'e eklenmez.
+
+# Vinext starter notes
 
 A clean full-stack starter running on [vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and Drizzle support.
 

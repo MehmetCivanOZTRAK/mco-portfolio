@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { Database, FilePlus2, FolderKanban, LogOut, Settings2, Type } from "lucide-react";
-import { chatGPTSignOutPath, requireChatGPTUser } from "@/app/chatgpt-auth";
+import { requireAdminPage } from "@/lib/admin-auth";
 import { AdminWebMcp } from "@/components/admin-webmcp";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const user = await requireChatGPTUser("/admin");
+  const email = await requireAdminPage("/admin");
   return <div className="admin-shell"><AdminWebMcp />
     <aside className="admin-sidebar">
       <Link className="brand" href="/"><span className="brand-mark">C</span><span>CIWAN.DEV</span></Link>
@@ -17,7 +17,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <Link href="/admin/content"><Type /> Site metinleri</Link>
         <Link href="/admin/database"><Database /> Veritabanı</Link>
       </nav>
-      <div className="admin-user"><span>{user.displayName}</span><a href={chatGPTSignOutPath("/")}><LogOut size={16} /> Çıkış</a></div>
+      <div className="admin-user"><span>{email}</span><form action="/api/auth/logout" method="post"><button type="submit"><LogOut size={16} /> Çıkış</button></form></div>
     </aside>
     <div className="admin-content">{children}</div>
   </div>;

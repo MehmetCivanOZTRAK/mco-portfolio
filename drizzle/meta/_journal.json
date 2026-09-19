@@ -15,6 +15,13 @@
       "when": 1789517251322,
       "tag": "0001_bouncy_venom",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1789855565845,
+      "tag": "0002_gorgeous_namor",
+      "breakpoints": true
     }
   ]
 }

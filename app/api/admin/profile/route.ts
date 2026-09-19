@@ -7,7 +7,7 @@ const schema = z.object({ displayName: z.string().trim().min(2).max(60), role: z
 
 export async function PUT(request: Request) {
   try {
-    await requireApiAdmin(); assertSameOrigin(request);
+    await requireApiAdmin(request); assertSameOrigin(request);
     const data = schema.parse(await request.json());
     const [profile] = await getDb().insert(profiles).values({ id: 1, ...data }).onConflictDoUpdate({ target: profiles.id, set: { ...data, updatedAt: new Date().toISOString() } }).returning();
     return Response.json({ profile });

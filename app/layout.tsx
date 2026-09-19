@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Ciwan — Oyunlar & Uygulamalar",
-  description: "Ciwan'ın geliştirdiği oyunlar, uygulamalar ve deneysel projeler.",
+  title: "Ciwan Games — Ücretsiz Online Oyunlar",
+  description: "Ciwan'ın geliştirdiği oyunları tarayıcıda ücretsiz oyna ve yeni yapımları keşfet.",
   icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
 };
 

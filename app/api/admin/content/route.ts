@@ -9,7 +9,7 @@ const schema = z.object(Object.fromEntries(keys.map((key) => [key, z.string().tr
 
 export async function PUT(request: Request) {
   try {
-    await requireApiAdmin();
+    await requireApiAdmin(request);
     assertSameOrigin(request);
     const content = schema.parse(await request.json());
     const [row] = await getDb().insert(siteContent).values({ id: 1, content: JSON.stringify(content) }).onConflictDoUpdate({ target: siteContent.id, set: { content: JSON.stringify(content), updatedAt: new Date().toISOString() } }).returning();

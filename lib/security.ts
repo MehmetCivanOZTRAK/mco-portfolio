@@ -1,4 +1,5 @@
 import { verifyAdminSession, ADMIN_COOKIE } from "@/lib/admin-auth";
+import { ZodError } from "zod";
 
 export async function requireApiAdmin(request: Request) {
   const cookie = request.headers.get("cookie")?.split(";").map((part) => part.trim()).find((part) => part.startsWith(`${ADMIN_COOKIE}=`))?.slice(ADMIN_COOKIE.length + 1);
@@ -15,9 +16,10 @@ export class ApiError extends Error {
 }
 
 export function apiFailure(error: unknown) {
-  const status = error instanceof ApiError ? error.status : 500;
-  const message = error instanceof ApiError ? error.message : "İşlem tamamlanamadı.";
-  if (!(error instanceof ApiError)) console.error(error);
+  const isDuplicateSlug = error instanceof Error && /UNIQUE constraint failed: projects\.slug/i.test(error.message);
+  const status = error instanceof ApiError ? error.status : error instanceof ZodError ? 400 : isDuplicateSlug ? 409 : 500;
+  const message = error instanceof ApiError ? error.message : error instanceof ZodError ? (error.issues[0]?.message ?? "Form bilgileri geçersiz.") : isDuplicateSlug ? "Bu URL kısa adı başka bir projede kullanılıyor." : "İşlem tamamlanamadı.";
+  if (!(error instanceof ApiError) && !(error instanceof ZodError) && !isDuplicateSlug) console.error(error);
   return Response.json({ error: message }, { status });
 }
 

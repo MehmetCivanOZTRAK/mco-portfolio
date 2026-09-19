@@ -4,7 +4,7 @@ import { getDb } from "@/db";
 import { projects } from "@/db/schema";
 import { ApiError, apiFailure, assertSameOrigin, requireApiAdmin, safeFilename } from "@/lib/security";
 import { getAllProjects } from "@/lib/portfolio";
-import { unpackWebGame } from "@/lib/game-package";
+import { unpackWebGame, WEB_GAME_ZIP_LIMIT } from "@/lib/game-package";
 
 const schema = z.object({
   title: z.string().trim().min(2).max(80),
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
       if (!packageExt.has(ext) || projectFile.size > 20 * 1024 * 1024) throw new ApiError("Proje dosyası ZIP/APK/EXE/MSI/DMG/AppImage olmalı ve 20 MB'ı geçmemeli.");
     }
     if (webGame instanceof File && webGame.size) {
-      if (parsed.data.kind !== "game" || !webGame.name.toLowerCase().endsWith(".zip") || webGame.size > 15 * 1024 * 1024) throw new ApiError("Tarayıcı oyunu, kökünde index.html bulunan ve en fazla 15 MB olan bir ZIP dosyası olmalı.");
+      if (parsed.data.kind !== "game" || !webGame.name.toLowerCase().endsWith(".zip") || webGame.size > WEB_GAME_ZIP_LIMIT) throw new ApiError("Tarayıcı oyunu, index.html içeren ve en fazla 50 MB olan bir Unity WebGL ZIP dosyası olmalı.");
     }
     let coverKey: string | null = null; let fileKey: string | null = null; let gameRootKey: string | null = null;
     if ((cover instanceof File && cover.size) || (projectFile instanceof File && projectFile.size) || (webGame instanceof File && webGame.size)) {
@@ -57,7 +57,7 @@ export async function POST(request: Request) {
       if (projectFile instanceof File && projectFile.size) { fileKey = `packages/${crypto.randomUUID()}-${safeFilename(projectFile.name)}`; await bucket.put(fileKey, projectFile.stream(), { httpMetadata: { contentType: "application/octet-stream", contentDisposition: `attachment; filename="${safeFilename(projectFile.name)}"` } }); uploaded.push(fileKey); }
       if (webGame instanceof File && webGame.size) {
         const assets = unpackWebGame(new Uint8Array(await webGame.arrayBuffer())); gameRootKey = `games/${crypto.randomUUID()}`;
-        for (let index = 0; index < assets.length; index += 10) await Promise.all(assets.slice(index, index + 10).map(async (asset) => { const key = `${gameRootKey}/${asset.path}`; await bucket.put(key, asset.bytes, { httpMetadata: { contentType: asset.contentType } }); uploaded.push(key); }));
+        for (let index = 0; index < assets.length; index += 10) await Promise.all(assets.slice(index, index + 10).map(async (asset) => { const key = `${gameRootKey}/${asset.path}`; await bucket.put(key, asset.bytes, { httpMetadata: { contentType: asset.contentType, contentEncoding: asset.contentEncoding } }); uploaded.push(key); }));
       }
     }
     const [project] = await getDb().insert(projects).values({ ...parsed.data, featured: data.get("featured") === "on", projectUrl: parsed.data.projectUrl || null, coverKey, fileKey, fileName: projectFile instanceof File && projectFile.size ? safeFilename(projectFile.name) : null, fileSize: projectFile instanceof File && projectFile.size ? projectFile.size : null, gameRootKey }).returning();

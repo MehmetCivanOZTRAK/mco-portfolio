@@ -1,6 +1,6 @@
 # Ciwan Games
 
-Kişisel HTML5 oyun portalı ve yönetim paneli. Oyunlar kapak görseli, kategori, açıklama ve kökünde `index.html` bulunan ZIP paketiyle eklenir. ZIP içindeki yollar göreli olmalı; paket en fazla 15 MB, açılmış içerik en fazla 60 MB ve 300 dosya olabilir.
+Kişisel Unity WebGL/HTML5 oyun portalı ve yönetim paneli. Unity'de WebGL build alındıktan sonra oluşan klasör ZIP olarak yüklenir. `index.html` ZIP kökünde veya ZIP içindeki tek üst klasörde olabilir. Gzip, Brotli ve `.unityweb` çıktıları desteklenir; paket en fazla 50 MB, açılmış içerik en fazla 250 MB ve 1.000 dosya olabilir.
 
 ## Yerel kullanım
 

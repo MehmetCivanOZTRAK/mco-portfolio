@@ -5,7 +5,7 @@ import { getDb } from "@/db";
 import { projects } from "@/db/schema";
 import { ApiError, apiFailure, assertSameOrigin, requireApiAdmin } from "@/lib/security";
 import { safeFilename } from "@/lib/security";
-import { unpackWebGame } from "@/lib/game-package";
+import { unpackWebGame, WEB_GAME_ZIP_LIMIT } from "@/lib/game-package";
 
 const idSchema = z.coerce.number().int().positive();
 const editSchema = z.object({
@@ -25,14 +25,14 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     const cover = form.get("cover"); const projectFile = form.get("projectFile"); const webGame = form.get("webGame");
     if (cover instanceof File && cover.size && (!["image/jpeg", "image/png", "image/webp"].includes(cover.type) || cover.size > 5 * 1024 * 1024)) throw new ApiError("Kapak JPG, PNG veya WebP olmalı ve 5 MB'ı geçmemeli.");
     if (projectFile instanceof File && projectFile.size) { const extension = projectFile.name.split(".").pop()?.toLowerCase() ?? ""; if (!["zip", "apk", "exe", "msi", "dmg", "appimage"].includes(extension) || projectFile.size > 20 * 1024 * 1024) throw new ApiError("Proje dosyası desteklenmiyor veya 20 MB sınırını aşıyor."); }
-    if (webGame instanceof File && webGame.size && (data.kind !== "game" || !webGame.name.toLowerCase().endsWith(".zip") || webGame.size > 15 * 1024 * 1024)) throw new ApiError("Tarayıcı oyunu ZIP olmalı, yalnızca oyunlarda kullanılmalı ve 15 MB'ı geçmemeli.");
+    if (webGame instanceof File && webGame.size && (data.kind !== "game" || !webGame.name.toLowerCase().endsWith(".zip") || webGame.size > WEB_GAME_ZIP_LIMIT)) throw new ApiError("Unity WebGL oyunu ZIP olmalı, yalnızca oyunlarda kullanılmalı ve 50 MB'ı geçmemeli.");
     let coverKey = current.coverKey; let fileKey = current.fileKey; let fileName = current.fileName; let fileSize = current.fileSize; let gameRootKey = current.gameRootKey;
     if ((cover instanceof File && cover.size) || (projectFile instanceof File && projectFile.size) || (webGame instanceof File && webGame.size)) {
       if (!env.BUCKET) throw new ApiError("Dosya depolama şu anda kullanılamıyor.", 503);
       const bucket = env.BUCKET;
       if (cover instanceof File && cover.size) { coverKey = `covers/${crypto.randomUUID()}`; await bucket.put(coverKey, cover.stream(), { httpMetadata: { contentType: cover.type } }); uploaded.push(coverKey); }
       if (projectFile instanceof File && projectFile.size) { fileName = safeFilename(projectFile.name); fileSize = projectFile.size; fileKey = `packages/${crypto.randomUUID()}-${fileName}`; await bucket.put(fileKey, projectFile.stream(), { httpMetadata: { contentType: "application/octet-stream", contentDisposition: `attachment; filename="${fileName}"` } }); uploaded.push(fileKey); }
-      if (webGame instanceof File && webGame.size) { const assets = unpackWebGame(new Uint8Array(await webGame.arrayBuffer())); gameRootKey = `games/${crypto.randomUUID()}`; for (let index = 0; index < assets.length; index += 10) await Promise.all(assets.slice(index, index + 10).map(async (asset) => { const key = `${gameRootKey}/${asset.path}`; await bucket.put(key, asset.bytes, { httpMetadata: { contentType: asset.contentType } }); uploaded.push(key); })); }
+      if (webGame instanceof File && webGame.size) { const assets = unpackWebGame(new Uint8Array(await webGame.arrayBuffer())); gameRootKey = `games/${crypto.randomUUID()}`; for (let index = 0; index < assets.length; index += 10) await Promise.all(assets.slice(index, index + 10).map(async (asset) => { const key = `${gameRootKey}/${asset.path}`; await bucket.put(key, asset.bytes, { httpMetadata: { contentType: asset.contentType, contentEncoding: asset.contentEncoding } }); uploaded.push(key); })); }
     }
     const [project] = await getDb().update(projects).set({ ...data, featured: form.get("featured") === "on", projectUrl: data.projectUrl || null, coverKey, fileKey, fileName, fileSize, gameRootKey, updatedAt: new Date().toISOString() }).where(eq(projects.id, id)).returning();
     if (!project) throw new ApiError("Proje bulunamadı.", 404);

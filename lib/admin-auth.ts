@@ -45,7 +45,7 @@ export async function verifyAdminCredentials(email: string, password: string) {
   if (email.trim().toLocaleLowerCase("tr") !== admin.email) return false;
   const [algorithm, roundsText, saltValue, expectedValue] = admin.passwordHash.split("$");
   const rounds = Number(roundsText);
-  if (algorithm !== "pbkdf2-sha256" || !Number.isInteger(rounds) || rounds < 100_000 || !saltValue || !expectedValue) return false;
+  if (algorithm !== "pbkdf2-sha256" || rounds !== 100_000 || !saltValue || !expectedValue) return false;
   const keyMaterial = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
   const derived = new Uint8Array(await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: base64UrlToBytes(saltValue), iterations: rounds }, keyMaterial, 256));
   return safeEqual(derived, base64UrlToBytes(expectedValue));

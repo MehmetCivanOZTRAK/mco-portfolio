@@ -104,10 +104,11 @@ function externalLink(value: string) {
   return value.startsWith("http://") || value.startsWith("https://");
 }
 
-export function PortfolioClient({ content, latestVideos }: { content: PortfolioContent; latestVideos: LatestVideo[] }) {
+export function PortfolioClient({ content }: { content: PortfolioContent }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [locale, setLocale] = useState<Locale>("tr");
   const [activeSection, setActiveSection] = useState<NavigationId>("hakkimda");
+  const [latestVideos, setLatestVideos] = useState<LatestVideo[]>([]);
   const { profile, sections, socials, experiences, projects, documents, branding } = content;
   const ui = interfaceCopy[locale];
   const localized = (value: LocalizedText) => value[locale] || value.tr;
@@ -162,6 +163,23 @@ export function PortfolioClient({ content, latestVideos }: { content: PortfolioC
   useEffect(() => {
     document.documentElement.lang = locale;
   }, [locale]);
+
+  useEffect(() => {
+    const channelId = content.creator.youtubeChannelId.trim();
+    if (!/^UC[\w-]{20,}$/.test(channelId)) return;
+
+    const controller = new AbortController();
+    fetch(`/api/youtube?channelId=${encodeURIComponent(channelId)}`, { signal: controller.signal })
+      .then((response) => response.ok ? response.json() : Promise.reject(new Error("YouTube feed unavailable")))
+      .then((data: unknown) => {
+        if (Array.isArray(data)) setLatestVideos(data.slice(0, 2) as LatestVideo[]);
+      })
+      .catch((error: unknown) => {
+        if (!(error instanceof DOMException && error.name === "AbortError")) return;
+      });
+
+    return () => controller.abort();
+  }, [content.creator.youtubeChannelId]);
 
   function chooseLanguage(nextLocale: Locale) {
     setLocale(nextLocale);

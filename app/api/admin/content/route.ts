@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
-import { requireAdmin } from "@/lib/admin-auth";
+import { isSameOriginRequest, requireAdmin } from "@/lib/admin-auth";
 import { portfolioContentSchema } from "@/lib/content";
 import { readPortfolioContent, writePortfolioContent } from "@/lib/content-store";
 
@@ -17,6 +17,9 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   try {
+    if (!isSameOriginRequest(request)) {
+      return NextResponse.json({ error: "Geçersiz istek." }, { status: 403 });
+    }
     await requireAdmin();
     const payload = portfolioContentSchema.parse(await request.json());
     return NextResponse.json(await writePortfolioContent(payload));

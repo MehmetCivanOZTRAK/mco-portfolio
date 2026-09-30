@@ -5,3 +5,10 @@ export const siteContent = sqliteTable("site_content", {
   payload: text("payload").notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
 });
+
+export const adminLoginAttempts = sqliteTable("admin_login_attempts", {
+  identifier: text("identifier").primaryKey(),
+  attempts: integer("attempts").notNull().default(0),
+  blockedUntil: integer("blocked_until").notNull().default(0),
+  updatedAt: integer("updated_at").notNull(),
+});

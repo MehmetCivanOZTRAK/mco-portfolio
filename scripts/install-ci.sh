@@ -170,7 +170,7 @@ timeout \
   --signal=TERM \
   --kill-after="${SITES_INSTALL_KILL_AFTER:-15s}" \
   "${SITES_INSTALL_TIMEOUT:-8m}" \
-  npm "${npm_ci_args[@]}"
+  node "${script_dir}/npm-install.mjs" "${cache_seed_result}" npm "${npm_ci_args[@]}"
 
 vinext="${SITES_PROJECT_ROOT}/node_modules/.bin/vinext"
 if [[ ! -x "${vinext}" ]]; then
@@ -178,9 +178,8 @@ if [[ ! -x "${vinext}" ]]; then
   exit 69
 fi
 
-node --input-type=module - "${SITES_PROJECT_ROOT}/node_modules/.sites-install.json" "${lockfile_sha256}" "${cache_seed_result}" <<'NODE'
-import { constants } from "node:fs";
-import { open, writeFile } from "node:fs/promises";
+node --input-type=module - "${SITES_PROJECT_ROOT}/node_modules/.sites-install.json" "${lockfile_sha256}" <<'NODE'
+import { writeFile } from "node:fs/promises";
 
 await writeFile(
   process.argv[2],
@@ -190,22 +189,5 @@ await writeFile(
     platform: `${process.platform}-${process.arch}`,
   }, null, 2)}\n`,
 );
-// The measured plugin wrapper supplies an existing private file for this attempt.
-// Cache telemetry must not change the install result or create arbitrary files.
-const reportPath = process.env.SITES_INSTALL_REPORT_PATH;
-if (reportPath) {
-  let report;
-  try {
-    report = await open(reportPath, constants.O_WRONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
-    if ((await report.stat()).isFile()) {
-      await report.truncate(0);
-      await report.writeFile(`${JSON.stringify({ version: 1, cache_seed: process.argv[4] })}\n`);
-    }
-  } catch {
-    // Leave the decision unavailable rather than inventing seed use or failing setup.
-  } finally {
-    await report?.close().catch(() => {});
-  }
-}
 NODE
 echo "[sites] npm ci passed and vinext is available"

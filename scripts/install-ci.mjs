@@ -3,6 +3,7 @@ import { accessSync, constants } from "node:fs";
 import path from "node:path";
 import { projectRoot } from "./sites-env.mjs";
 import { readExecutionProfile } from "./execution-profile.mjs";
+import { runNpmInstall } from "./npm-install.mjs";
 
 if (!process.env.npm_execpath) {
   throw new Error("Run this installer with npm run install:ci.");
@@ -26,16 +27,13 @@ if (readExecutionProfile() === "managed-linux") {
 }
 
 // Invoke npm's JavaScript entrypoint, avoiding platform-specific shell shims.
-const installed = spawnSync(
+const installed = await runNpmInstall([
   process.execPath,
-  [
     process.env.npm_execpath, "ci", "--prefix", projectRoot, "--workspaces=false",
     "--include=dev", "--include=optional", "--prefer-offline", "--no-audit", "--no-fund",
-  ],
-  { stdio: "inherit" },
-);
-if (installed.error) throw installed.error;
-if (installed.status !== 0) process.exit(installed.status ?? 1);
+]);
+if (installed.signal) process.kill(process.pid, installed.signal);
+if (installed.code !== 0 || installed.signal) process.exit(installed.code || 1);
 
 try {
   accessSync(

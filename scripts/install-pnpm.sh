@@ -205,7 +205,7 @@ if [[ "${store_scope}" == workspace ]]; then
 elif [[ "${runtime_root}" != "${SITES_PROJECT_ROOT}/.sites-runtime" ]]; then
   configured_store='${SITES_RUNTIME_ROOT:-.sites-runtime}/pnpm-store'
 fi
-"${pnpm_command[@]}" config set package-import-method clone-or-copy --location project
+"${pnpm_command[@]}" config set package-import-method auto --location project
 "${pnpm_command[@]}" config set store-dir "${configured_store}" --location project
 "${pnpm_command[@]}" config set cache-dir "${configured_store}/policy-cache" --location project
 

@@ -1,18 +1,33 @@
-import { z } from "zod";
-import { getDb } from "@/db";
-import { siteContent } from "@/db/schema";
-import { apiFailure, assertSameOrigin, requireApiAdmin } from "@/lib/security";
-import { fallbackSiteContent } from "@/lib/site-content";
+import { NextResponse } from "next/server";
+import { ZodError } from "zod";
+import { requireAdmin } from "@/lib/admin-auth";
+import { portfolioContentSchema } from "@/lib/content";
+import { readPortfolioContent, writePortfolioContent } from "@/lib/content-store";
 
-const keys = Object.keys(fallbackSiteContent) as [keyof typeof fallbackSiteContent, ...(keyof typeof fallbackSiteContent)[]];
-const schema = z.object(Object.fromEntries(keys.map((key) => [key, z.string().trim().min(1).max(300)])) as Record<keyof typeof fallbackSiteContent, z.ZodString>);
+export const dynamic = "force-dynamic";
+
+export async function GET() {
+  try {
+    await requireAdmin();
+    return NextResponse.json(await readPortfolioContent());
+  } catch {
+    return NextResponse.json({ error: "Yetkisiz erişim." }, { status: 403 });
+  }
+}
 
 export async function PUT(request: Request) {
   try {
-    await requireApiAdmin(request);
-    assertSameOrigin(request);
-    const content = schema.parse(await request.json());
-    const [row] = await getDb().insert(siteContent).values({ id: 1, content: JSON.stringify(content) }).onConflictDoUpdate({ target: siteContent.id, set: { content: JSON.stringify(content), updatedAt: new Date().toISOString() } }).returning();
-    return Response.json({ content: JSON.parse(row.content) });
-  } catch (error) { return apiFailure(error); }
+    await requireAdmin();
+    const payload = portfolioContentSchema.parse(await request.json());
+    return NextResponse.json(await writePortfolioContent(payload));
+  } catch (error) {
+    if (error instanceof ZodError) {
+      return NextResponse.json({ error: "Bazı alanlar geçersiz.", details: error.issues }, { status: 400 });
+    }
+    console.error("Portfolio content could not be saved:", error);
+    return NextResponse.json(
+      { error: "İçerik kaydedilemedi. Veritabanı bağlantısını kontrol edin." },
+      { status: 500 },
+    );
+  }
 }

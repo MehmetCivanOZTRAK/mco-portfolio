@@ -203,7 +203,7 @@ async function main() {
     "--frozen-lockfile", "--prefer-offline", "--store-dir", store,
     "--cache-dir", path.join(store, "policy-cache"), "--fetch-retries=0",
     "--fetch-timeout=30000", "--network-concurrency=1", "--reporter=ndjson",
-    "--package-import-method=clone-or-copy"];
+    "--package-import-method=auto"];
   let result = { code: 1, signal: null };
   let receivedSignal;
   try {

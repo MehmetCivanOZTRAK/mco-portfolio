@@ -48,7 +48,14 @@ function safeEqual(left: Uint8Array, right: Uint8Array) {
 async function verifyStoredHash(candidate: string, storedHash: string) {
   const [algorithm, roundsText, saltValue, expectedValue] = storedHash.split("$");
   const rounds = Number(roundsText);
-  if (algorithm !== "pbkdf2-sha256" || rounds !== 100_000 || !saltValue || !expectedValue) return false;
+  if (
+    algorithm !== "pbkdf2-sha256"
+    || !Number.isInteger(rounds)
+    || rounds < 100_000
+    || rounds > 1_000_000
+    || !saltValue
+    || !expectedValue
+  ) return false;
 
   try {
     const keyMaterial = await crypto.subtle.importKey("raw", new TextEncoder().encode(candidate), "PBKDF2", false, ["deriveBits"]);

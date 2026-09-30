@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import Link from "next/link";
 import { ArrowLeft, KeyRound, LogIn } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -33,7 +32,9 @@ export function AdminLoginForm({ localPassword }: { localPassword?: string }) {
 
   return (
     <main className="admin-login-page">
-      <Link href="/" className="admin-login-back"><ArrowLeft size={16} /> Portfolyoya dön</Link>
+      <button type="button" className="admin-login-back" onClick={() => window.location.assign(new URL("/", window.location.origin).toString())}>
+        <ArrowLeft size={16} /> Portfolyoya dön
+      </button>
       <form className="admin-login-card" onSubmit={submit}>
         <div className="admin-login-icon"><KeyRound /></div>
         <p className="eyebrow">Yönetim alanı</p>

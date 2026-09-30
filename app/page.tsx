@@ -1,13 +1,13 @@
 import { readPortfolioContent } from "@/lib/content-store";
 import { PortfolioClient } from "@/components/portfolio-client";
-import { getLatestYouTubeVideo } from "@/lib/youtube";
+import { getLatestYouTubeVideos } from "@/lib/youtube";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site-config";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const content = await readPortfolioContent();
-  const latestVideo = await getLatestYouTubeVideo(content.creator.youtubeChannelId);
+  const latestVideos = await getLatestYouTubeVideos(content.creator.youtubeChannelId, 2);
   const sameAs = Object.values(content.socials).filter((url) => /^https?:\/\//.test(url));
   const photoUrl = content.profile.photoUrl ? new URL(content.profile.photoUrl, SITE_URL).toString() : undefined;
   const structuredData = {
@@ -37,7 +37,7 @@ export default async function Home() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }}
       />
-      <PortfolioClient content={content} latestVideo={latestVideo} />
+      <PortfolioClient content={content} latestVideos={latestVideos} />
     </>
   );
 }

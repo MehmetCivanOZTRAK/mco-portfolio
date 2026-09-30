@@ -59,6 +59,7 @@ const interfaceCopy = {
     instagramText: "Kısa notlar & geliştirme günlükleri",
     youtubeText: "Projeler, anlatımlar & kamera arkası",
     latestVideo: "En yeni YouTube videosu",
+    previousVideo: "Bir önceki YouTube videosu",
     youtubeCta: "En yeni videoları YouTube'da izle",
     youtubeChannel: "YouTube kanalına git",
     watchOnYouTube: "YouTube'da izle",
@@ -84,6 +85,7 @@ const interfaceCopy = {
     instagramText: "Short notes & development logs",
     youtubeText: "Projects, tutorials & behind the scenes",
     latestVideo: "Latest YouTube video",
+    previousVideo: "Previous YouTube video",
     youtubeCta: "Watch the latest videos on YouTube",
     youtubeChannel: "Visit YouTube channel",
     watchOnYouTube: "Watch on YouTube",
@@ -102,7 +104,7 @@ function externalLink(value: string) {
   return value.startsWith("http://") || value.startsWith("https://");
 }
 
-export function PortfolioClient({ content, latestVideo }: { content: PortfolioContent; latestVideo: LatestVideo | null }) {
+export function PortfolioClient({ content, latestVideos }: { content: PortfolioContent; latestVideos: LatestVideo[] }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [locale, setLocale] = useState<Locale>("tr");
   const [activeSection, setActiveSection] = useState<NavigationId>("hakkimda");
@@ -126,21 +128,33 @@ export function PortfolioClient({ content, latestVideo }: { content: PortfolioCo
       ? window.requestAnimationFrame(() => setLocale(savedLocale))
       : undefined;
 
-    const observer = new IntersectionObserver((entries) => {
-      const visible = entries
-        .filter((entry) => entry.isIntersecting)
-        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-      if (visible && navigationIds.includes(visible.target.id as NavigationId)) {
-        setActiveSection(visible.target.id as NavigationId);
-      }
-    }, { rootMargin: "-28% 0px -55%", threshold: [0.08, 0.25, 0.5] });
+    let scrollFrame = 0;
+    const updateActiveSection = () => {
+      scrollFrame = 0;
+      const activationLine = Math.min(window.innerHeight * 0.32, 260);
+      let nextSection: NavigationId = navigationIds[0];
 
-    navigationIds.forEach((id) => {
-      const element = document.getElementById(id);
-      if (element) observer.observe(element);
-    });
+      for (const id of navigationIds) {
+        const element = document.getElementById(id);
+        if (element && element.getBoundingClientRect().top <= activationLine) nextSection = id;
+      }
+
+      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4) {
+        nextSection = navigationIds[navigationIds.length - 1];
+      }
+      setActiveSection((current) => current === nextSection ? current : nextSection);
+    };
+    const scheduleSectionUpdate = () => {
+      if (!scrollFrame) scrollFrame = window.requestAnimationFrame(updateActiveSection);
+    };
+
+    window.addEventListener("scroll", scheduleSectionUpdate, { passive: true });
+    window.addEventListener("resize", scheduleSectionUpdate);
+    scrollFrame = window.requestAnimationFrame(updateActiveSection);
     return () => {
-      observer.disconnect();
+      window.removeEventListener("scroll", scheduleSectionUpdate);
+      window.removeEventListener("resize", scheduleSectionUpdate);
+      if (scrollFrame) window.cancelAnimationFrame(scrollFrame);
       if (localeFrame !== undefined) window.cancelAnimationFrame(localeFrame);
     };
   }, []);
@@ -292,16 +306,25 @@ export function PortfolioClient({ content, latestVideo }: { content: PortfolioCo
           </div>
         </div>
         <div className="creator-stage">
-          <div className="video-card video-card-back"><span>DEV.LOG</span></div>
-          {latestVideo ? (
+          {latestVideos[1] && (
             <a
-              className="video-card video-card-front has-thumbnail"
-              href={latestVideo.url}
+              className="video-card video-card-back has-thumbnail"
+              href={latestVideos[1].url}
               target="_blank"
               rel="noreferrer"
-              aria-label={`${ui.watchOnYouTube}: ${latestVideo.title}`}
-              style={{ "--video-thumbnail": `url(${latestVideo.thumbnailUrl})` } as React.CSSProperties}
-            ><Play /><strong>{latestVideo.title}</strong><small>{ui.latestVideo}</small></a>
+              aria-label={`${ui.watchOnYouTube}: ${latestVideos[1].title}`}
+              style={{ "--video-thumbnail": `url(${latestVideos[1].thumbnailUrl})` } as React.CSSProperties}
+            ><Play /><strong>{latestVideos[1].title}</strong><small>{ui.previousVideo}</small></a>
+          )}
+          {latestVideos[0] ? (
+            <a
+              className="video-card video-card-front has-thumbnail"
+              href={latestVideos[0].url}
+              target="_blank"
+              rel="noreferrer"
+              aria-label={`${ui.watchOnYouTube}: ${latestVideos[0].title}`}
+              style={{ "--video-thumbnail": `url(${latestVideos[0].thumbnailUrl})` } as React.CSSProperties}
+            ><Play /><strong>{latestVideos[0].title}</strong><small>{ui.latestVideo}</small></a>
           ) : (
             <a className="video-card video-card-front" href={socials.youtube} target="_blank" rel="noreferrer"><Play /><strong>{ui.youtubeCta}</strong><small>{ui.youtubeChannel}</small></a>
           )}

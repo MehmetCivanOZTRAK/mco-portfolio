@@ -27,7 +27,7 @@ export async function PUT(request: Request) {
     if (error instanceof ZodError) {
       return NextResponse.json({ error: "Bazı alanlar geçersiz.", details: error.issues }, { status: 400 });
     }
-    console.error("Portfolio content could not be saved:", error);
+    console.error("Portfolio content could not be saved:", error instanceof Error ? error.message : "Unknown error");
     return NextResponse.json(
       { error: "İçerik kaydedilemedi. Veritabanı bağlantısını kontrol edin." },
       { status: 500 },

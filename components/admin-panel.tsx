@@ -3,9 +3,7 @@
 import { useState } from "react";
 import { ArrowLeft, Eye, FileUp, ImageUp, LogOut, Plus, Save, Trash2 } from "lucide-react";
 import type { Locale, LocalizedText, PortfolioContent } from "@/lib/content";
-import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 
 type Tab = "profile" | "sections" | "experience" | "projects" | "documents";
 
@@ -33,7 +31,6 @@ const sectionLabels: Record<keyof PortfolioContent["sections"], string> = {
 };
 
 export function AdminPanel({ initialContent }: { initialContent: PortfolioContent }) {
-  const router = useRouter();
   const [content, setContent] = useState(initialContent);
   const [activeTab, setActiveTab] = useState<Tab>("profile");
   const [editingLanguage, setEditingLanguage] = useState<Locale>("tr");
@@ -66,8 +63,7 @@ export function AdminPanel({ initialContent }: { initialContent: PortfolioConten
 
   async function logout() {
     await fetch("/api/admin/logout", { method: "POST" });
-    router.push("/admin/login");
-    router.refresh();
+    window.location.assign(new URL("/admin/login", window.location.origin).toString());
   }
 
   async function upload(file: File, category: "image" | "document" | "game") {
@@ -209,8 +205,8 @@ export function AdminPanel({ initialContent }: { initialContent: PortfolioConten
             <button type="button" className={editingLanguage === "tr" ? "active" : ""} onClick={() => setEditingLanguage("tr")}>TR</button>
             <button type="button" className={editingLanguage === "en" ? "active" : ""} onClick={() => setEditingLanguage("en")}>EN</button>
           </div>
-          <Link className="admin-button" href="/"><ArrowLeft size={16} /><span>Siteye dön</span></Link>
-          <Link className="admin-button" href="/" target="_blank"><Eye size={16} /><span>Önizle</span></Link>
+          <button className="admin-button" type="button" onClick={() => window.location.assign(new URL("/", window.location.origin).toString())}><ArrowLeft size={16} /><span>Siteye dön</span></button>
+          <button className="admin-button" type="button" onClick={() => window.open(new URL("/", window.location.origin).toString(), "_blank", "noopener,noreferrer")}><Eye size={16} /><span>Önizle</span></button>
           <button className="admin-button" type="button" onClick={logout}><LogOut size={16} /><span>Çıkış</span></button>
           <button className="admin-button primary" type="button" onClick={save} disabled={busy}><Save size={16} /><span>{busy ? "İşleniyor" : "Kaydet"}</span></button>
         </div>

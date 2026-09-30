@@ -14,8 +14,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "payload": {
-          "name": "payload",
+        "content": {
+          "name": "content",
           "type": "text",
           "primaryKey": false,
           "notNull": true,

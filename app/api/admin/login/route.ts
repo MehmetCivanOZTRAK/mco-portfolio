@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     await createAdminSession();
     return NextResponse.json({ ok: true }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
-    console.error("Admin login failed:", error);
+    console.error("Admin login failed:", error instanceof Error ? error.message : "Unknown error");
     return NextResponse.json({ error: "Giriş yapılamadı." }, { status: 500, headers: { "Cache-Control": "no-store" } });
   }
 }

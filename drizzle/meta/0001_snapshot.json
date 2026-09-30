@@ -14,8 +14,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "attempts": {
-          "name": "attempts",
+        "failures": {
+          "name": "failures",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,

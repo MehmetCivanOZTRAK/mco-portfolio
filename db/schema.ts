@@ -8,7 +8,7 @@ export const siteContent = sqliteTable("site_content", {
 
 export const adminLoginAttempts = sqliteTable("admin_login_attempts", {
   identifier: text("identifier").primaryKey(),
-  attempts: integer("attempts").notNull().default(0),
+  failures: integer("failures").notNull().default(0),
   blockedUntil: integer("blocked_until").notNull().default(0),
   updatedAt: integer("updated_at").notNull(),
 });

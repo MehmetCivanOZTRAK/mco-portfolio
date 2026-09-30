@@ -5,19 +5,21 @@ const WINDOW_SECONDS = 15 * 60;
 const BLOCK_SECONDS = 15 * 60;
 
 type AttemptRow = {
-  attempts: number;
+  attempts?: number;
+  failures?: number;
   blocked_until: number;
   updated_at: number;
 };
 
 let tableReady: Promise<unknown> | undefined;
+let failureColumn: Promise<"failures" | "attempts"> | undefined;
 
 function database() {
   if (!env.DB) throw new Error("Giriş güvenliği veritabanına ulaşılamıyor.");
   tableReady ??= env.DB.prepare(`
     CREATE TABLE IF NOT EXISTS admin_login_attempts (
       identifier TEXT PRIMARY KEY NOT NULL,
-      attempts INTEGER NOT NULL DEFAULT 0,
+      failures INTEGER NOT NULL DEFAULT 0,
       blocked_until INTEGER NOT NULL DEFAULT 0,
       updated_at INTEGER NOT NULL
     )
@@ -33,6 +35,17 @@ async function ensureTable() {
   await tableReady;
 }
 
+async function resolveFailureColumn() {
+  await ensureTable();
+  failureColumn ??= database().prepare("PRAGMA table_info(admin_login_attempts)").all<{ name: string }>()
+    .then(({ results }) => results.some((column) => column.name === "failures") ? "failures" : "attempts")
+    .catch((error) => {
+      failureColumn = undefined;
+      throw error;
+    });
+  return failureColumn;
+}
+
 async function requestIdentifier(request: Request) {
   const address = request.headers.get("cf-connecting-ip")
     || request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
@@ -45,7 +58,7 @@ async function requestIdentifier(request: Request) {
 async function readAttempt(identifier: string) {
   await ensureTable();
   return database()
-    .prepare("SELECT attempts, blocked_until, updated_at FROM admin_login_attempts WHERE identifier = ?")
+    .prepare("SELECT * FROM admin_login_attempts WHERE identifier = ?")
     .bind(identifier)
     .first<AttemptRow>();
 }
@@ -64,14 +77,16 @@ export async function loginRateLimit(request: Request) {
 export async function recordLoginFailure(identifier: string) {
   const row = await readAttempt(identifier);
   const now = Math.floor(Date.now() / 1000);
-  const attempts = row && row.updated_at >= now - WINDOW_SECONDS ? row.attempts + 1 : 1;
+  const previousFailures = row?.failures ?? row?.attempts ?? 0;
+  const attempts = row && row.updated_at >= now - WINDOW_SECONDS ? previousFailures + 1 : 1;
   const blockedUntil = attempts >= MAX_ATTEMPTS ? now + BLOCK_SECONDS : 0;
+  const column = await resolveFailureColumn();
 
   await database().prepare(`
-    INSERT INTO admin_login_attempts (identifier, attempts, blocked_until, updated_at)
+    INSERT INTO admin_login_attempts (identifier, ${column}, blocked_until, updated_at)
     VALUES (?, ?, ?, ?)
     ON CONFLICT(identifier) DO UPDATE SET
-      attempts = excluded.attempts,
+      ${column} = excluded.${column},
       blocked_until = excluded.blocked_until,
       updated_at = excluded.updated_at
   `).bind(identifier, attempts, blockedUntil, now).run();

@@ -44,15 +44,11 @@ const socialColors = {
 
 const interfaceCopy = {
   tr: {
-    nav: { hakkimda: "Hakkımda", deneyim: "Deneyim", projeler: "Projeler", icerik: "İçerik", iletisim: "İletişim" },
     openMenu: "Menüyü aç",
     closeMenu: "Menüyü kapat",
     menuHint: "Menüden bir bölüme geçebilir ya da ekranı kaydırarak keşfedebilirsin.",
     greeting: "Merhaba, ben",
     creatorBadge: "Üreten öğrenci",
-    openCv: "CV'yi aç",
-    cvSoon: "CV yakında",
-    contactMe: "Bana ulaş",
     documentKicker: "Belge arşivi",
     documentTitle: "CV & sertifikalar",
     noDocuments: "Belgeler yönetim panelinden eklenebilir.",
@@ -63,22 +59,16 @@ const interfaceCopy = {
     youtubeCta: "En yeni videoları YouTube'da izle",
     youtubeChannel: "YouTube kanalına git",
     watchOnYouTube: "YouTube'da izle",
-    admin: "İçerik yönetimi",
-    backToTop: "Yukarı dön ↑",
     portraitAlt: "portresi",
     photoPlaceholder: "Fotoğrafını ekle",
     languageLabel: "Dil seçimi",
   },
   en: {
-    nav: { hakkimda: "About", deneyim: "Experience", projeler: "Projects", icerik: "Content", iletisim: "Contact" },
     openMenu: "Open menu",
     closeMenu: "Close menu",
     menuHint: "Choose a section from the menu or scroll to explore.",
     greeting: "Hi, I'm",
     creatorBadge: "Student creator",
-    openCv: "Open résumé",
-    cvSoon: "Résumé coming soon",
-    contactMe: "Contact me",
     documentKicker: "Document archive",
     documentTitle: "Résumé & certificates",
     noDocuments: "Documents can be added from the admin panel.",
@@ -89,8 +79,6 @@ const interfaceCopy = {
     youtubeCta: "Watch the latest videos on YouTube",
     youtubeChannel: "Visit YouTube channel",
     watchOnYouTube: "Watch on YouTube",
-    admin: "Content management",
-    backToTop: "Back to top ↑",
     portraitAlt: "portrait",
     photoPlaceholder: "Add your photo",
     languageLabel: "Language selection",
@@ -109,9 +97,16 @@ export function PortfolioClient({ content }: { content: PortfolioContent }) {
   const [locale, setLocale] = useState<Locale>("tr");
   const [activeSection, setActiveSection] = useState<NavigationId>("hakkimda");
   const [latestVideos, setLatestVideos] = useState<LatestVideo[]>([]);
-  const { profile, sections, socials, experiences, projects, documents, branding } = content;
+  const { profile, sections, socials, experiences, projects, documents, branding, labels } = content;
   const ui = interfaceCopy[locale];
   const localized = (value: LocalizedText) => value[locale] || value.tr;
+  const navigationLabels: Record<NavigationId, string> = {
+    hakkimda: localized(labels.navAbout),
+    deneyim: localized(labels.navExperience),
+    projeler: localized(labels.navProjects),
+    icerik: localized(labels.navContent),
+    iletisim: localized(labels.navContact),
+  };
   const cv = documents.find((document) => document.type === "cv");
   const certificates = documents.filter((document) => document.type === "certificate");
   const socialItems = useMemo(() => (Object.keys(socialLabels) as Array<keyof typeof socialLabels>)
@@ -199,7 +194,7 @@ export function PortfolioClient({ content }: { content: PortfolioContent }) {
       <header className="site-header">
         <a className="brand" href="#anasayfa" aria-label={locale === "tr" ? "Ana sayfa" : "Home"}>{renderLogo()}</a>
         <nav className="desktop-nav" aria-label="Ana menü">
-          {navigationIds.map((id) => <a key={id} className={activeSection === id ? "is-active" : ""} href={`#${id}`} onClick={() => setActiveSection(id)}>{ui.nav[id]}</a>)}
+          {navigationIds.map((id) => <a key={id} className={activeSection === id ? "is-active" : ""} href={`#${id}`} onClick={() => setActiveSection(id)}>{navigationLabels[id]}</a>)}
         </nav>
         <div className="header-tools">
           <div className="language-switch" aria-label={ui.languageLabel} role="group">
@@ -218,7 +213,7 @@ export function PortfolioClient({ content }: { content: PortfolioContent }) {
         </div>
         <nav aria-label="Mobil menü">
           {navigationIds.map((id, index) => (
-            <a key={id} href={`#${id}`} className={activeSection === id ? "is-active" : ""} onClick={() => { setActiveSection(id); closeMenu(); }}><span>{String(index + 1).padStart(2, "0")}</span>{ui.nav[id]}</a>
+            <a key={id} href={`#${id}`} className={activeSection === id ? "is-active" : ""} onClick={() => { setActiveSection(id); closeMenu(); }}><span>{String(index + 1).padStart(2, "0")}</span>{navigationLabels[id]}</a>
           ))}
         </nav>
         <p>{ui.menuHint}</p>
@@ -248,11 +243,11 @@ export function PortfolioClient({ content }: { content: PortfolioContent }) {
           <div className="social-row" aria-label={locale === "tr" ? "Sosyal medya bağlantıları" : "Social media links"}><SocialTooltip items={socialItems} /></div>
           <div className="hero-actions">
             {cv ? (
-              <FlowButton className="flow-primary" text={ui.openCv} href={cv.fileUrl} target="_blank" rel="noreferrer" />
+              <FlowButton className="flow-primary" text={localized(labels.openCv)} href={cv.fileUrl} target="_blank" rel="noreferrer" />
             ) : (
-              <FlowButton className="flow-primary" text={ui.cvSoon} href="#belgeler" />
+              <FlowButton className="flow-primary" text={localized(labels.cvSoon)} href="#belgeler" />
             )}
-            <FlowButton text={ui.contactMe} href="#iletisim" />
+            <FlowButton text={localized(labels.contactMe)} href="#iletisim" />
           </div>
           <div className="hero-meta">
             <span><MapPin size={15} /> {localized(profile.location)}</span>
@@ -352,7 +347,7 @@ export function PortfolioClient({ content }: { content: PortfolioContent }) {
       <section className="contact-section section-pad" id="iletisim">
         <p className="eyebrow">{localized(sections.contactKicker)}</p><h2>{localized(sections.contactTitle)}</h2><p>{localized(sections.contactDescription)}</p>
         <a className="contact-mail" href={`mailto:${profile.email}`}><Mail /> {profile.email}</a>
-        <div className="contact-bottom"><span>© {new Date().getFullYear()} {profile.name}</span><Link href="/admin">{ui.admin}</Link><a href="#anasayfa">{ui.backToTop}</a></div>
+        <div className="contact-bottom"><span>© {new Date().getFullYear()} {profile.name}</span><Link href="/admin">{localized(labels.admin)}</Link><a href="#anasayfa">{localized(labels.backToTop)}</a></div>
       </section>
     </main>
   );

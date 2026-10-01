@@ -17,6 +17,7 @@
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; background: var(--bg); }
 body { margin: 0; background: var(--bg); color: var(--ink); font-family: Arial, Helvetica, sans-serif; overflow-x: hidden; }
+#anasayfa, #hakkimda, #deneyim, #belgeler, #projeler, #icerik, #iletisim { scroll-margin-top: 112px; }
 body.menu-open { overflow: hidden; }
 a { color: inherit; text-decoration: none; }
 button, input, textarea, select { font: inherit; }
@@ -187,12 +188,13 @@ img { display: block; max-width: 100%; }
   .hero { grid-template-columns: .9fr 1.1fr; gap: 35px; }.hero-portrait-wrap { min-height: 500px; }.orbit-one { width: 420px; height: 420px; }.orbit-two { width: 470px; height: 310px; }
   .experience-grid { grid-template-columns: 1fr; }.experience-card { min-height: 290px; }.experience-icon { margin-bottom: 35px; }
   .project-card { min-height: 540px; grid-template-columns: .9fr 1.1fr; }.project-copy { padding: 45px 35px; }.project-visual { padding: 30px; }
-  .creator-section { gap: 35px; }.admin-layout { grid-template-columns: 1fr; }.admin-sidebar { position: static; grid-template-columns: repeat(5, minmax(max-content, 1fr)); overflow-x: auto; }
+  .creator-section { gap: 35px; }.admin-layout { grid-template-columns: 1fr; }.admin-sidebar { position: static; grid-template-columns: repeat(6, minmax(max-content, 1fr)); overflow-x: auto; }
 }
 
 @media (max-width: 760px) {
   :root { --page: calc(100vw - 32px); }
   .site-header { top: 10px; width: calc(100vw - 20px); height: 58px; padding: 0 8px 0 17px; border-radius: 18px; }.desktop-nav { display: none; }.menu-button { display: flex; }.brand-image { height: 32px; }.language-switch { width: 76px; height: 34px; }.language-switch-highlight { width: 33px; height: 26px; }.language-switch-highlight.is-en { transform: translateX(36px); }
+  #anasayfa, #hakkimda, #deneyim, #belgeler, #projeler, #icerik, #iletisim { scroll-margin-top: 84px; }
   .mobile-menu { position: fixed; z-index: 100; inset: 0; display: flex; flex-direction: column; padding: 18px 20px 28px; background: #09090b; opacity: 0; visibility: hidden; transform: translateY(-12px); transition: .25s; }.mobile-menu.is-open { opacity: 1; visibility: visible; transform: none; }
   .mobile-menu::before { content: ""; position: absolute; inset: 0; z-index: -1; background: radial-gradient(circle at 80% 10%, rgba(135,78,255,.2), transparent 35%), #09090b; }
   .mobile-menu-top { display: flex; justify-content: space-between; align-items: center; }.mobile-menu-top button { width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 50%; background: #18151d; color: white; }

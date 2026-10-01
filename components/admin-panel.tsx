@@ -5,11 +5,12 @@ import { ArrowLeft, Eye, FileUp, ImageUp, LogOut, Plus, Save, Trash2 } from "luc
 import type { Locale, LocalizedText, PortfolioContent } from "@/lib/content";
 import Image from "next/image";
 
-type Tab = "profile" | "sections" | "experience" | "projects" | "documents";
+type Tab = "profile" | "sections" | "labels" | "experience" | "projects" | "documents";
 
 const tabs: Array<{ id: Tab; label: string }> = [
   { id: "profile", label: "Profil" },
   { id: "sections", label: "Bölüm metinleri" },
+  { id: "labels", label: "Menü & düğmeler" },
   { id: "experience", label: "Deneyimler" },
   { id: "projects", label: "Projeler" },
   { id: "documents", label: "CV & Sertifikalar" },
@@ -28,6 +29,19 @@ const sectionLabels: Record<keyof PortfolioContent["sections"], string> = {
   contactKicker: "İletişim üst başlığı",
   contactTitle: "İletişim başlığı",
   contactDescription: "İletişim açıklaması",
+};
+
+const interfaceLabels: Record<keyof PortfolioContent["labels"], string> = {
+  navAbout: "Menü — Hakkımda",
+  navExperience: "Menü — Deneyim",
+  navProjects: "Menü — Projeler",
+  navContent: "Menü — İçerik",
+  navContact: "Menü — İletişim",
+  openCv: "CV yüklüyken görünen düğme",
+  cvSoon: "CV yokken görünen düğme",
+  contactMe: "İletişim düğmesi",
+  admin: "Alt bölüm — yönetim bağlantısı",
+  backToTop: "Alt bölüm — yukarı dön bağlantısı",
 };
 
 export function AdminPanel({ initialContent }: { initialContent: PortfolioContent }) {
@@ -95,6 +109,17 @@ export function AdminPanel({ initialContent }: { initialContent: PortfolioConten
       setContent((current) => ({ ...current, branding: { ...current.branding, logoUrl: result.url } }));
       flash("Logo yüklendi. Kalıcı olması için Kaydet'e basın.");
     } catch (error) { flash(error instanceof Error ? error.message : "Logo yüklenemedi."); }
+    finally { setBusy(false); }
+  }
+
+  async function uploadFavicon(file?: File) {
+    if (!file) return;
+    setBusy(true);
+    try {
+      const result = await upload(file, "image");
+      setContent((current) => ({ ...current, branding: { ...current.branding, faviconUrl: result.url } }));
+      flash("Sekme ikonu yüklendi. Kalıcı olması için Kaydet'e basın.");
+    } catch (error) { flash(error instanceof Error ? error.message : "Sekme ikonu yüklenemedi."); }
     finally { setBusy(false); }
   }
 
@@ -232,10 +257,12 @@ export function AdminPanel({ initialContent }: { initialContent: PortfolioConten
                 <Field className="full" multiline label="Açıklama" value={translated(content.profile.description)} onChange={(value) => updateProfileTranslation("description", value)} />
               </div></div>
               <div className="admin-card"><h2>Portre fotoğrafı</h2><label className="upload-zone"><ImageUp /><b>Yeni portre seç</b><small>JPG, PNG veya WEBP · en fazla 8 MB</small><input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => uploadPhoto(event.target.files?.[0])} /></label></div>
-              <div className="admin-card"><h2>Logo</h2><div className="admin-grid">
+              <div className="admin-card"><h2>Logo ve sekme ikonu</h2><div className="admin-grid">
                 <Field label="Logo yazısı" value={content.branding.logoText} onChange={(value) => setContent((current) => ({ ...current, branding: { ...current.branding, logoText: value } }))} />
                 <label className="upload-zone admin-field"><ImageUp /><b>Logo görseli yükle</b><small>PNG, JPG veya WEBP · görsel varsa logo yazısının yerine kullanılır</small><input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => uploadLogo(event.target.files?.[0])} /></label>
                 {content.branding.logoUrl && <div className="admin-logo-preview full"><Image src={content.branding.logoUrl} alt="Yüklenen logo" width={160} height={64} /><button className="admin-button danger" type="button" onClick={() => setContent((current) => ({ ...current, branding: { ...current.branding, logoUrl: "" } }))}>Görsel logoyu kaldır</button></div>}
+                <label className="upload-zone admin-field"><ImageUp /><b>Tarayıcı sekme ikonu yükle</b><small>Kare PNG veya WEBP önerilir · en az 128 × 128 piksel</small><input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => uploadFavicon(event.target.files?.[0])} /></label>
+                {content.branding.faviconUrl && <div className="admin-logo-preview"><Image src={content.branding.faviconUrl} alt="Tarayıcı sekme ikonu" width={56} height={56} /><button className="admin-button danger" type="button" onClick={() => setContent((current) => ({ ...current, branding: { ...current.branding, faviconUrl: "" } }))}>Sekme ikonunu kaldır</button></div>}
               </div></div>
               <div className="admin-card"><h2>Sosyal bağlantılar</h2><div className="admin-grid">
                 {(Object.keys(content.socials) as Array<keyof typeof content.socials>).map((key) => <Field key={key} label={key[0].toUpperCase() + key.slice(1)} value={content.socials[key]} onChange={(value) => updateSocial(key, value)} />)}
@@ -247,6 +274,10 @@ export function AdminPanel({ initialContent }: { initialContent: PortfolioConten
 
           {activeTab === "sections" && <div className="admin-card"><h2>Sayfadaki bölüm başlıkları</h2><div className="admin-grid">
             {(Object.keys(content.sections) as Array<keyof typeof content.sections>).map((key) => <Field key={key} className={key.toLowerCase().includes("description") ? "full" : ""} multiline={key.toLowerCase().includes("description")} label={sectionLabels[key]} value={translated(content.sections[key])} onChange={(value) => setContent((current) => ({ ...current, sections: { ...current.sections, [key]: updateTranslation(current.sections[key], value) } }))} />)}
+          </div></div>}
+
+          {activeTab === "labels" && <div className="admin-card"><h2>Menü ve düğme yazıları</h2><p className="admin-help">Üstte seçili olan dil için görünen metinleri düzenleyin.</p><div className="admin-grid">
+            {(Object.keys(content.labels) as Array<keyof typeof content.labels>).map((key) => <Field key={key} label={interfaceLabels[key]} value={translated(content.labels[key])} onChange={(value) => setContent((current) => ({ ...current, labels: { ...current.labels, [key]: updateTranslation(current.labels[key], value) } }))} />)}
           </div></div>}
 
           {activeTab === "experience" && <div className="admin-card"><div className="admin-item-top"><h2>Deneyim kartları</h2><button className="admin-button" type="button" onClick={addExperience}><Plus size={16} /> Kart ekle</button></div><div className="admin-list">

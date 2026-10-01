@@ -3,6 +3,20 @@ import { NextResponse } from "next/server";
 import { isSameOriginRequest, requireAdmin } from "@/lib/admin-auth";
 
 const imageTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+const MAX_BUCKET_BYTES = 8 * 1024 * 1024 * 1024;
+
+async function getStoredBytes(bucket: R2Bucket) {
+  let storedBytes = 0;
+  let cursor: string | undefined;
+
+  do {
+    const result = await bucket.list({ cursor, limit: 1000 });
+    storedBytes += result.objects.reduce((total, object) => total + object.size, 0);
+    cursor = result.truncated ? result.cursor : undefined;
+  } while (cursor);
+
+  return storedBytes;
+}
 
 export async function POST(request: Request) {
   try {
@@ -10,7 +24,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Geçersiz istek." }, { status: 403 });
     }
     await requireAdmin();
-    if (!env.BUCKET) throw new Error("Dosya deposu kullanılamıyor.");
+    const bucket = env.BUCKET;
+    if (!bucket) throw new Error("Dosya deposu kullanılamıyor.");
 
     const data = await request.formData();
     const file = data.get("file");
@@ -34,9 +49,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: `Dosya en fazla ${maxMegabytes} MB olabilir.` }, { status: 400 });
     }
 
+    const storedBytes = await getStoredBytes(bucket);
+    if (storedBytes + file.size > MAX_BUCKET_BYTES) {
+      return NextResponse.json({
+        error: "Ücretsiz R2 kotasını korumak için toplam yükleme alanı 8 GB ile sınırlandırıldı.",
+      }, { status: 413 });
+    }
+
     const safeName = file.name.toLowerCase().replace(/[^a-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "");
     const key = `${category}/${crypto.randomUUID()}-${safeName || (isPdf ? "document.pdf" : isZip ? "game.zip" : "image")}`;
-    await env.BUCKET.put(key, file.stream(), {
+    await bucket.put(key, file.stream(), {
       httpMetadata: { contentType: file.type },
       customMetadata: { originalName: file.name },
     });

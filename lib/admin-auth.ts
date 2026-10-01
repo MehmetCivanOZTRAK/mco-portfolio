@@ -6,7 +6,6 @@ const SESSION_SECONDS = 60 * 60 * 8;
 export const LOCAL_ADMIN_PASSWORD = "civan123";
 
 type RuntimeSecrets = {
-  ADMIN_PASSWORD?: string;
   ADMIN_PASSWORD_HASH?: string;
   AUTH_SECRET?: string;
 };
@@ -14,7 +13,7 @@ type RuntimeSecrets = {
 function configuredCredentials() {
   const runtime = env as unknown as RuntimeSecrets;
   return {
-    password: runtime.ADMIN_PASSWORD || (process.env.NODE_ENV === "development" ? LOCAL_ADMIN_PASSWORD : ""),
+    password: process.env.NODE_ENV === "development" ? LOCAL_ADMIN_PASSWORD : "",
     passwordHash: runtime.ADMIN_PASSWORD_HASH || "",
     authSecret: runtime.AUTH_SECRET || "",
   };
@@ -51,8 +50,7 @@ async function verifyStoredHash(candidate: string, storedHash: string) {
   if (
     algorithm !== "pbkdf2-sha256"
     || !Number.isInteger(rounds)
-    || rounds < 100_000
-    || rounds > 1_000_000
+    || rounds !== 100_000
     || !saltValue
     || !expectedValue
   ) return false;
@@ -99,8 +97,8 @@ export function isSameOriginRequest(request: Request) {
 export async function verifyAdminPassword(candidate: string) {
   const configured = configuredCredentials();
   if (!candidate) return false;
-  if (configured.password) return (await signature(candidate)) === (await signature(configured.password));
   if (configured.passwordHash) return verifyStoredHash(candidate, configured.passwordHash);
+  if (configured.password) return (await signature(candidate)) === (await signature(configured.password));
   return false;
 }
 

@@ -1,13 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from "@/lib/site-config";
-import { readPortfolioContent } from "@/lib/content-store";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const content = await readPortfolioContent();
-  const iconUrl = content.branding.faviconUrl;
-
-  return {
+export const metadata: Metadata = {
     metadataBase: new URL(SITE_URL),
     applicationName: SITE_NAME,
     title: {
@@ -57,7 +52,7 @@ export async function generateMetadata(): Promise<Metadata> {
       },
     },
     manifest: "/manifest.webmanifest",
-    icons: iconUrl ? { icon: iconUrl, shortcut: iconUrl } : {
+    icons: {
       icon: [
         { url: "/favicon.ico", sizes: "48x48", type: "image/x-icon" },
         { url: "/favicon-48x48.png", sizes: "48x48", type: "image/png" },
@@ -66,8 +61,7 @@ export async function generateMetadata(): Promise<Metadata> {
       shortcut: "/favicon.ico",
       apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
     },
-  };
-}
+};
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (

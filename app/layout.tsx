@@ -5,7 +5,7 @@ import { readPortfolioContent } from "@/lib/content-store";
 
 export async function generateMetadata(): Promise<Metadata> {
   const content = await readPortfolioContent();
-  const iconUrl = content.branding.faviconUrl || "/favicon.svg";
+  const iconUrl = content.branding.faviconUrl;
 
   return {
     metadataBase: new URL(SITE_URL),
@@ -57,7 +57,15 @@ export async function generateMetadata(): Promise<Metadata> {
       },
     },
     manifest: "/manifest.webmanifest",
-    icons: { icon: iconUrl, shortcut: iconUrl },
+    icons: iconUrl ? { icon: iconUrl, shortcut: iconUrl } : {
+      icon: [
+        { url: "/favicon.ico", sizes: "48x48", type: "image/x-icon" },
+        { url: "/favicon-48x48.png", sizes: "48x48", type: "image/png" },
+        { url: "/favicon-192x192.png", sizes: "192x192", type: "image/png" },
+      ],
+      shortcut: "/favicon.ico",
+      apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+    },
   };
 }
 
